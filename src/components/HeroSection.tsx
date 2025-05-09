@@ -56,7 +56,7 @@ const HeroSection = () => {
           className="w-full h-full min-w-full min-h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-1500"
           poster="https://sallyssoultherapy.com/wp-content/uploads/2024/07/cropped-new-edited-logo-1.png"
         >
-          <source src="/sst-hero-bg.mp4" type="video/mp4" />
+          <source src="https://drive.google.com/uc?export=download&id=1OXW66BBJHMO99S_gJjH2qdXnJ6WoRHxw" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
