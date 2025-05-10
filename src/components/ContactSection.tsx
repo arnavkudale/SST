@@ -21,20 +21,11 @@ const ContactSection = () => {
                     <MapPin className="h-6 w-6 text-accent-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Main Branch</h3>
+                    <h3 className="text-lg font-semibold mb-2">Our Branches</h3>
                     <p className="text-gray-700">
                       17, Enterprise Apartment, Forjett Hill Road, Tardeo, Mumbai – 400026, Maharashtra.
                     </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-4">
-                  <div className="bg-white p-3 rounded-full shadow-md">
-                    <MapPin className="h-6 w-6 text-accent-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Second Location</h3>
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 mt-2">
                       J2, Shop 17, Shram Seva Niwas, Opp. Lodha New Cuffe Parade, Wadala (E) Mumbai – 37
                     </p>
                   </div>
