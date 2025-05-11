@@ -3,7 +3,7 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
-import { validationResult } from 'express-validator';
+import { validationResult, body } from 'express-validator';
 import pool from './src/config/database.js';
 import { auth, isAdmin } from './src/middleware/auth.js';
 import { apiLimiter, authLimiter } from './src/middleware/rateLimiter.js';
