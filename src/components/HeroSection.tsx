@@ -1,29 +1,61 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const HeroSection = () => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [scrollIndicator, setScrollIndicator] = React.useState({ y: 0, opacity: 1 });
+  const [videoError, setVideoError] = React.useState(false);
 
   React.useEffect(() => {
-    // Fade in the video smoothly after it's loaded
-    if (videoRef.current) {
-      const video = videoRef.current;
-      video.addEventListener('loadeddata', () => {
-        video.classList.add('opacity-100');
-      });
-    }
+    let isMounted = true;
+
+    const loadVideo = async () => {
+      try {
+        if (!videoRef.current) return;
+
+        const video = videoRef.current;
+        
+        // Set loading state
+        if (isMounted) setIsLoading(true);
+
+        // Wait for video to be loaded
+        await new Promise((resolve, reject) => {
+          video.addEventListener('loadeddata', resolve, { once: true });
+          video.addEventListener('error', reject, { once: true });
+        });
+
+        // Fade in video
+        if (isMounted) {
+          video.classList.add('opacity-100');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading video:', error);
+        if (isMounted) {
+          setVideoError(true);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadVideo();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Animate scroll indicator
   React.useEffect(() => {
     const handleScroll = () => {
-      const maxScroll = window.innerHeight * 0.5; // fade out over first half viewport
+      const maxScroll = window.innerHeight * 0.5;
       const y = Math.min(window.scrollY, maxScroll);
       const opacity = 1 - y / maxScroll;
       setScrollIndicator({
-        y: y * 0.6, // move up a bit slower than scroll
+        y: y * 0.6,
         opacity: Math.max(0, opacity)
       });
     };
@@ -44,21 +76,45 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-screen overflow-hidden">
+    <section className="relative h-screen overflow-hidden" aria-label="Hero section with background video">
       {/* Video container from navbar to bottom of viewport */}
       <div className="absolute inset-0 w-full h-full">
-        <video 
-          ref={videoRef}
-          autoPlay 
-          loop 
-          muted 
-          playsInline
-          className="w-full h-full min-w-full min-h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-1500"
-          poster="https://sallyssoultherapy.com/wp-content/uploads/2024/07/cropped-new-edited-logo-1.png"
-        >
-          <source src="https://www.dropbox.com/scl/fi/1qs1dokt08lxe3m4t160h/sst-hero-bg.mp4?rlkey=l04sld6u0ifykpb9wp8cm0cg1&st=rv4nx5ms&raw=1" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+            <Loader2 className="w-12 h-12 text-white animate-spin" aria-label="Loading video" />
+          </div>
+        )}
+        {videoError ? (
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(https://sallyssoultherapy.com/wp-content/uploads/2024/07/cropped-new-edited-logo-1.png)`
+            }}
+            aria-label="Fallback background image"
+          />
+        ) : (
+          <video 
+            ref={videoRef}
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            preload="auto"
+            className="w-full h-full min-w-full min-h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-1500"
+            poster="https://sallyssoultherapy.com/wp-content/uploads/2024/07/cropped-new-edited-logo-1.png"
+            aria-label="Background video"
+          >
+            <source 
+              src="https://res.cloudinary.com/dqcsmhanc/video/upload/v1746808773/sst-hero-bg-optimized_dvdgnl.mp4" 
+              type="video/mp4"
+            />
+            <source 
+              src="https://res.cloudinary.com/dqcsmhanc/video/upload/v1746808773/sst-hero-bg-optimized_dvdgnl.webm" 
+              type="video/webm"
+            />
+            Your browser does not support the video tag.
+          </video>
+        )}
       </div>
 
       {/* Content over the video, scrolls normally */}
@@ -73,13 +129,13 @@ const HeroSection = () => {
           >
             {isPlaying ? (
               // Pause icon
-              <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="8" y="7" width="4" height="18" rx="1.5" fill="#111" />
                 <rect x="20" y="7" width="4" height="18" rx="1.5" fill="#111" />
               </svg>
             ) : (
               // Play icon
-              <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <circle cx="16" cy="16" r="15" stroke="#111" strokeWidth="2" fill="white" />
                 <polygon points="13,10 24,16 13,22" fill="#111" />
               </svg>
@@ -103,6 +159,8 @@ const HeroSection = () => {
           pointerEvents: scrollIndicator.opacity === 0 ? 'none' : 'auto',
           zIndex: 20
         }}
+        role="navigation"
+        aria-label="Scroll down indicator"
       >
         <span
           className="text-white text-xs font-thin tracking-widest mb-1"
@@ -115,7 +173,7 @@ const HeroSection = () => {
         >
           SCROLL DOWN
         </span>
-        <svg className="scroll-arrow" width="38" height="18" viewBox="0 0 38 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg className="scroll-arrow" width="38" height="18" viewBox="0 0 38 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <polyline points="4,4 19,15 34,4" stroke="white" strokeWidth="1.5" fill="none" />
           <polyline points="10,8 19,15 28,8" stroke="white" strokeWidth="1.5" fill="none" />
         </svg>

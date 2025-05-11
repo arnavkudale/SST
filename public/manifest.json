@@ -1,0 +1,17 @@
+{
+  "name": "Sally's Soul Therapy",
+  "short_name": "SST",
+  "description": "Professional therapy services for your soul",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+} 
