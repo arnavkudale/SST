@@ -11,7 +11,6 @@ import { secureHeaders, csrfProtection, validationSchemas, errorHandler } from '
 import { bookingService } from '../src/services/bookingService.js';
 
 const app = express();
-const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
 
 // Middleware
@@ -402,5 +401,10 @@ app.put('/api/services/:serviceId',
 // Error handling middleware
 app.use(errorHandler);
 
-// Export the Express API
-export default app; 
+// Export the serverless function
+export default function handler(req, res) {
+  if (!req.url.startsWith('/api/')) {
+    req.url = `/api${req.url}`;
+  }
+  return app(req, res);
+} 
