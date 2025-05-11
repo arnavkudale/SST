@@ -5,6 +5,22 @@
   "installCommand": "npm install",
   "framework": "vite",
   "outputDirectory": "dist",
+  "functions": {
+    "server.mjs": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server.mjs"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -60,7 +76,19 @@
     }
   ],
   "env": {
-    "VITE_GA_MEASUREMENT_ID": "@vite_ga_measurement_id"
+    "VITE_GA_MEASUREMENT_ID": "@vite_ga_measurement_id",
+    "DB_HOST": "@db_host",
+    "DB_USER": "@db_user",
+    "DB_PASSWORD": "@db_password",
+    "DB_NAME": "@db_name",
+    "DB_PORT": "@db_port",
+    "JWT_SECRET": "@jwt_secret",
+    "JWT_EXPIRY": "@jwt_expiry",
+    "CSRF_SECRET": "@csrf_secret",
+    "RATE_LIMIT_WINDOW": "@rate_limit_window",
+    "RATE_LIMIT_MAX": "@rate_limit_max",
+    "ADMIN_EMAIL": "@admin_email",
+    "ADMIN_PASSWORD": "@admin_password"
   },
   "github": {
     "silent": true
