@@ -27,6 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(secureHeaders);
 app.use('/api/', apiLimiter);
 
+// Add static file serving
+app.use(express.static('.'));
+
 // Get CSRF token
 app.get('/api/csrf-token', csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
