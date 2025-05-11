@@ -4,11 +4,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import { validationResult, body } from 'express-validator';
-import pool from './src/config/database.js';
-import { auth, isAdmin } from './src/middleware/auth.js';
-import { apiLimiter, authLimiter } from './src/middleware/rateLimiter.js';
-import { secureHeaders, csrfProtection, validationSchemas, errorHandler } from './src/middleware/security.js';
-import { bookingService } from './src/services/bookingService.js';
+import pool from '../src/config/database.js';
+import { auth, isAdmin } from '../src/middleware/auth.js';
+import { apiLimiter, authLimiter } from '../src/middleware/rateLimiter.js';
+import { secureHeaders, csrfProtection, validationSchemas, errorHandler } from '../src/middleware/security.js';
+import { bookingService } from '../src/services/bookingService.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -17,8 +17,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://your-production-domain.com' 
-    : 'http://localhost:8080',
+    ? 'https://sst-alpha.vercel.app' 
+    : 'http://localhost:3000',
   credentials: true
 }));
 app.use(cookieParser());
@@ -39,7 +39,7 @@ app.get('/api/csrf-token', csrfProtection, (req, res) => {
 app.post('/api/auth/register', 
   authLimiter,
   validationSchemas.register,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -216,11 +216,7 @@ app.get('/api/products', async (req, res) => {
 app.post('/api/products', 
   auth, 
   isAdmin,
-  [
-    body('name').notEmpty(),
-    body('price').isFloat({ min: 0 }),
-    body('category').notEmpty()
-  ],
+  validationSchemas.product,
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -406,6 +402,5 @@ app.put('/api/services/:serviceId',
 // Error handling middleware
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-}); 
+// Export the Express API
+export default app; 
