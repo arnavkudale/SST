@@ -90,8 +90,10 @@ class UserInteractionTracker {
       this.interactions.shift();
     }
 
-    // Send to analytics
-    trackEvent('UserInteraction', interaction.type, interaction.element, interaction.timestamp);
+    // Send to analytics if GA is initialized
+    if (typeof window.gtag === 'function') {
+      trackEvent('UserInteraction', interaction.type, interaction.element, interaction.timestamp);
+    }
   }
 
   public getInteractions(): UserInteraction[] {
@@ -99,56 +101,77 @@ class UserInteractionTracker {
   }
 }
 
+let gaInitialized = false;
+
 // Initialize Google Analytics
 export const initGA = (measurementId: string) => {
-  // Load the Google Analytics script
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-  document.head.appendChild(script);
+  if (!measurementId || gaInitialized) return;
 
-  // Initialize gtag
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function() {
-    window.dataLayer.push(arguments);
-  };
-  window.gtag('js', new Date());
-  window.gtag('config', measurementId, {
-    send_page_view: false,
-    debug_mode: process.env.NODE_ENV === 'development',
-    custom_map: {
-      dimension1: 'user_type',
-      dimension2: 'interaction_count',
-      metric1: 'scroll_depth',
-      metric2: 'time_on_page'
-    }
-  });
+  return new Promise<void>((resolve) => {
+    // Load the Google Analytics script
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+    
+    script.onload = () => {
+      // Initialize gtag
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function() {
+        window.dataLayer.push(arguments);
+      };
+      window.gtag('js', new Date());
+      window.gtag('config', measurementId, {
+        send_page_view: false,
+        debug_mode: process.env.NODE_ENV === 'development',
+        custom_map: {
+          dimension1: 'user_type',
+          dimension2: 'interaction_count',
+          metric1: 'scroll_depth',
+          metric2: 'time_on_page'
+        }
+      });
 
-  // Initialize user interaction tracking
-  UserInteractionTracker.getInstance();
+      // Initialize user interaction tracking
+      UserInteractionTracker.getInstance();
 
-  // Track Web Vitals
-  const sendToGA = ({ name, delta, id }: { name: string; delta: number; id: string }) => {
-    window.gtag('event', name, {
-      event_category: 'Web Vitals',
-      event_label: id,
-      value: Math.round(delta),
-      non_interaction: true,
-    });
-  };
+      // Track Web Vitals
+      const sendToGA = ({ name, delta, id }: { name: string; delta: number; id: string }) => {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', name, {
+            event_category: 'Web Vitals',
+            event_label: id,
+            value: Math.round(delta),
+            non_interaction: true,
+          });
+        }
+      };
 
-  // Report Web Vitals
-  import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-    getCLS(sendToGA);
-    getFID(sendToGA);
-    getFCP(sendToGA);
-    getLCP(sendToGA);
-    getTTFB(sendToGA);
+      // Report Web Vitals
+      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+        getCLS(sendToGA);
+        getFID(sendToGA);
+        getFCP(sendToGA);
+        getLCP(sendToGA);
+        getTTFB(sendToGA);
+      });
+
+      gaInitialized = true;
+      resolve();
+    };
+
+    script.onerror = () => {
+      console.warn('Failed to load Google Analytics script');
+      resolve();
+    };
+
+    document.head.appendChild(script);
   });
 };
 
 // Track page views with enhanced data
 export const trackPageView = (url: string) => {
+  if (typeof window.gtag !== 'function') return;
+
   const interactions = UserInteractionTracker.getInstance().getInteractions();
   const timeOnPage = performance.now();
 
@@ -167,6 +190,8 @@ export const trackPageView = (url: string) => {
 
 // Track custom events with enhanced data
 export const trackEvent = (category: string, action: string, label?: string, value?: number) => {
+  if (typeof window.gtag !== 'function') return;
+
   const interactions = UserInteractionTracker.getInstance().getInteractions();
   
   window.gtag('event', action, {
@@ -180,6 +205,8 @@ export const trackEvent = (category: string, action: string, label?: string, val
 
 // Track performance metrics with enhanced data
 export const trackPerformance = () => {
+  if (typeof window.gtag !== 'function') return;
+
   const metrics = performanceMonitor.getMetrics();
   const interactions = UserInteractionTracker.getInstance().getInteractions();
   
@@ -189,4 +216,4 @@ export const trackPerformance = () => {
 
   // Track interaction metrics
   trackEvent('UserMetrics', 'InteractionSummary', undefined, interactions.length);
-}; 
+};

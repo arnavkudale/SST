@@ -7,18 +7,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "./context/CartContext";
 import SEO from '@/components/SEO';
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { performanceMonitor } from '@/lib/performance';
 import { performanceBudgetMonitor } from '@/lib/performance-budget';
 import { initGA, trackPageView, trackPerformance } from '@/lib/analytics';
 import PerformanceDashboard from './components/PerformanceDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authManager } from './lib/auth';
-
-// Initialize Google Analytics
-if (process.env.NODE_ENV === 'production') {
-  initGA(process.env.VITE_GA_MEASUREMENT_ID || '');
-}
 
 // Lazy load components
 const Index = lazy(() => import('@/pages/Index'));
@@ -73,8 +68,11 @@ const Navigation = () => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const [gaInitialized, setGaInitialized] = useState(false);
 
   useEffect(() => {
+    if (!gaInitialized) return;
+
     // Track page view
     trackPageView(location.pathname);
     
@@ -90,7 +88,7 @@ const AnimatedRoutes = () => {
     
     // Track performance
     trackPerformance();
-  }, [location]);
+  }, [location, gaInitialized]);
 
   return (
     <>
@@ -131,18 +129,30 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
+  const [gaInitialized, setGaInitialized] = useState(false);
+
   useEffect(() => {
-    // Initialize performance monitoring
-    const metrics = performanceMonitor.getMetrics();
-    console.log('Initial Performance Metrics:', metrics);
-    
-    // Check initial performance metrics
-    performanceBudgetMonitor.checkLCP(metrics.lcp);
-    performanceBudgetMonitor.checkFID(metrics.fid);
-    performanceBudgetMonitor.checkCLS(metrics.cls);
-    
-    // Track initial performance
-    trackPerformance();
+    // Initialize Google Analytics only in production
+    if (process.env.NODE_ENV === 'production' && !gaInitialized) {
+      const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+      if (measurementId) {
+        initGA(measurementId).then(() => {
+          setGaInitialized(true);
+          
+          // Initialize performance monitoring
+          const metrics = performanceMonitor.getMetrics();
+          console.log('Initial Performance Metrics:', metrics);
+          
+          // Check initial performance metrics
+          performanceBudgetMonitor.checkLCP(metrics.lcp);
+          performanceBudgetMonitor.checkFID(metrics.fid);
+          performanceBudgetMonitor.checkCLS(metrics.cls);
+          
+          // Track initial performance
+          trackPerformance();
+        });
+      }
+    }
   }, []);
 
   return (
